@@ -14,7 +14,9 @@ With the following steps you can use a sub domain of your domain hosted at Strat
        modulepath=/usr/syno/bin/ddns/strato46.php
        queryurl=https://dyndns.strato.com/nic/update
 4) In the control panel you can now select STRATO_4_6 from the dropdown, enter your host name (subdomain.ihredomain.de), user name (ihredomain.de) and password.
- 
+
+DSM is executing the DDNS update normally once every 24 hours. But sometimes every few minutes and that causes "abuse " response from Strato and a critical DSM Protocoll Center entry. To avoid that, a minimum interval $ageMin_h with preset to 2.0 hours was added.
+
 **Important:** In the control panel in the column "External Address" will still only your IPv4 address occure.
 
 But in /tmp/ddns.log the last line with the response from Strato should be e.g.
