@@ -12,7 +12,14 @@
 
 # Parameters: 1=account (Strato Domain), 2=pwd (use single quotes!) 3=hostname (incl. sub domain), 4=ip (IPv4)
 
-$fLOG = fopen('/tmp/ddns.log', 'a+'); # open_basedir option required!
+# if the IP addresses are sent too often to Strato, then you will get "abuse ..."
+# DSM runs this normally once per day, but in some cases ervery few seconds
+# ==> Workaround: If last update of the logfile is less than ageMin_h, don't send but simply return "nochg ..." to DSM
+$LOG_NAME='/tmp/ddns.log';
+$ageMin_h=2.0;
+$age_h=(time()-filemtime($LOG_NAME))/3600;
+
+$fLOG = fopen($LOG_NAME, 'a+'); # open_basedir option required!
 $date = date('Y-m-d H:i:s');
 $msg="\n$date Start $argv[0]\n";
 # echo("\n\n$date Start\n"); 
@@ -90,24 +97,31 @@ if($ipv6 != '') {
 $url .=  $myips;
 $msg .= "  used url: $url\n";
 
-# Send now the actual IPs to the DDNS provider Strato:
-$req = curl_init();
-curl_setopt($req, CURLOPT_URL, $url);
-curl_setopt($req,CURLOPT_RETURNTRANSFER,1); # https://stackoverflow.com/questions/6516902/how-to-get-response-using-curl-in-php
-curl_setopt($req,CURLOPT_CONNECTTIMEOUT,25);
-# without an agent you will get "badagent 0.0.0.0"
-# https://www.linksysinfo.org/index.php?threads/ddns-custom-url-badagent-error.75520/
-$agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
-curl_setopt($req, CURLOPT_USERAGENT, $agent);
-# CURLOPT_AUTOREFERER
-curl_setopt($req, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-curl_setopt($req, CURLOPT_USERPWD, "$account:$pwd");
+$res="nochg $ip $ipv6\n";
+$msg .= "  last sending before $age_h h\n";
+if ($age_h > $ageMin_h) {
+  # Send now the actual IPs to the DDNS provider Strato:
+  $req = curl_init();
+  curl_setopt($req, CURLOPT_URL, $url);
+  curl_setopt($req,CURLOPT_RETURNTRANSFER,1); # https://stackoverflow.com/questions/6516902/how-to-get-response-using-curl-in-php
+  curl_setopt($req,CURLOPT_CONNECTTIMEOUT,25);
+  # without an agent you will get "badagent 0.0.0.0"
+  # https://www.linksysinfo.org/index.php?threads/ddns-custom-url-badagent-error.75520/
+  $agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
+  curl_setopt($req, CURLOPT_USERAGENT, $agent);
+  # CURLOPT_AUTOREFERER
+  curl_setopt($req, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+  curl_setopt($req, CURLOPT_USERPWD, "$account:$pwd");
 
-# $res = 'nochg 9.99.999.999 2003:99:99:99:99:99:99:99'; # my be used for debugging
-# $res = 'badauth test';
-$res = curl_exec($req);
-curl_close($req);
-$msg .= "  curl_exec result: $res\n";
+  # $res = 'nochg 9.99.999.999 2003:99:99:99:99:99:99:99'; # my be used for debugging
+  # $res = 'badauth test';
+  $res = curl_exec($req);
+  curl_close($req);
+  $msg .= "  curl_exec result: $res";
+} else {
+  $msg .= "  sending skipped as last update was only $age_h h ago to avoid 'abuse ...' message\n";
+  $msg .= "  returned result: $res";
+}
 
 # https://community.synology.com/enu/forum/17/post/57640, normal responses:
     # good - Update successfully.
