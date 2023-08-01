@@ -17,8 +17,17 @@
 # ==> Workaround: If last update of the logfile is less than ageMin_h, don't send but simply return "nochg ..." to DSM
 $LOG_NAME='/tmp/ddns.log';
 $ageMin_h=2.0;
-$age_h=(time()-filemtime($LOG_NAME))/3600;
+if (file_exists($LOG_NAME)) {
+  $age_h=(time()-filemtime($LOG_NAME))/3600;
+} else {
+  $age_h=9999;
+}
 
+# https://stackoverflow.com/questions/1062716/php-returning-the-last-line-in-a-file
+$LOG_NAME_ESC = escapeshellarg($LOG_NAME); // for the security concious (should be everyone!)
+$lastLogLine = `tail -n 1 $LOG_NAME_ESC`;
+# should be eg.:
+# returned result: nochg 87.175.192.182 2003:c8:72e:a000:9209:d0ff:fe05:c05f
 $fLOG = fopen($LOG_NAME, 'a+'); # open_basedir option required!
 $date = date('Y-m-d H:i:s');
 $msg="\n$date Start $argv[0]\n";
@@ -86,10 +95,11 @@ if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
 
 # $url = 'https://' . $account . ':' . $pwd   . '@dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip=';
 $url = 'https://dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip='; # using AUTH_BASIC
-
+$unchanged=false;
 $myips = $ip;
 if($ipv6 != '') { # IPv4 and IPv6 available
   $myips .= ',';
+  # $unchanged=str_contains($lastLogLine, $ipv6);
 }  
 if($ipv6 != '') {
   $myips .= $ipv6;
@@ -98,8 +108,11 @@ $url .=  $myips;
 $msg .= "  used url: $url\n";
 
 $res="nochg $ip $ipv6\n";
-$msg .= "  last sending before $age_h h\n";
-if ($age_h > $ageMin_h) {
+# $msg .= "  last sending before $age_h h\n";
+if ( str_contains($lastLogLine, $ip) ) {
+  $unchanged=false;
+}
+if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
   # Send now the actual IPs to the DDNS provider Strato:
   $req = curl_init();
   curl_setopt($req, CURLOPT_URL, $url);
