@@ -1,5 +1,5 @@
 # Synology-DDNS-IPv6
-Synology DSM has still very limitted support for DynDNS including IPv6. Except for synology.me, only IPv4 is supported for all the pre-configured providers.
+Synology DSM has still very limitted support for DynDNS including IPv6. Except for synology.me, only IPv4 is supported for all the pre-configured providers. As long as the Internet provider assigns static IPv6 addresses, this is not a problem. In Germany, however, many providers are using dynamic IPv6 prefixes for private individuals, which change each time a new connection is established.
 
 Your internet router may support DDNS including IPv6, but it will not be a solution to access your Synology over IPv6 from outside. There is a single IPv4 global address (common for the router and e.g. your Synology), but there are different global IPv6 addresses for the router and your Synology. Therefore an DynDNS update routine including IPv6 on the Synology is required to make services on the Synology via IPv6 available from outside and not only your router.
 
