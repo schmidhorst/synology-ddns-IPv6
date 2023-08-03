@@ -95,11 +95,11 @@ if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
 
 # $url = 'https://' . $account . ':' . $pwd   . '@dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip=';
 $url = 'https://dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip='; # using AUTH_BASIC
-$unchanged=false;
+$unchanged=true;
 $myips = $ip;
 if($ipv6 != '') { # IPv4 and IPv6 available
   $myips .= ',';
-  # $unchanged=str_contains($lastLogLine, $ipv6);
+  $unchanged=str_contains($lastLogLine, $ipv6);
 }  
 if($ipv6 != '') {
   $myips .= $ipv6;
@@ -109,8 +109,9 @@ $msg .= "  used url: $url\n";
 
 $res="nochg $ip $ipv6\n";
 # $msg .= "  last sending before $age_h h\n";
-if ( str_contains($lastLogLine, $ip) ) {
+if (! str_contains($lastLogLine, $ip) ) {
   $unchanged=false;
+  # $msg .= "  new IPv4 $ip, not found in '$lastLogLine'\n";
 }
 if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
   # Send now the actual IPs to the DDNS provider Strato:
