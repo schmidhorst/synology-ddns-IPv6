@@ -5,15 +5,32 @@ Your internet router may support DDNS including IPv6, but it will not be a solut
 
 On your Synology device in the folder /usr/syno/bin/ddns/ there are scripts for some providers. If you are going to "Add" in the control panel under "External Access", "DDNS" you will find in the dropdown for "Service Providers" the entries from the file `/etc.defaults/ddns_provider.conf`.
 
-With the following steps you can use a sub domain of your domain hosted at Strato to access your Synology including IPv6:
-1) Follow the instructions under https://www.strato.de/faq/hosting/so-einfach-richten-sie-dyndns-fuer-ihre-domains-ein/ to setup a sub domain for the Synology on your domain.
-2) Copy the php script from this repository to `/usr/syno/bin/ddns/strato46.php`. And make it executable (chmod 755 ...)
-3) Add to that configuration file /etc.defaults/ddns_provider.conf the lines
+With the following steps you can use a sub domain of your domain hosted at Strato, Ionos or ipv64.net to access your Synology including IPv6:
+1) Follow the instructions to setup a sub domain for the Synology on your domain.
+
+   - Strato    : https://www.strato.de/faq/hosting/so-einfach-richten-sie-dyndns-fuer-ihre-domains-ein/
+   - Ionos     : https://www.ionos.de/hilfe/domains/ip-adresse-konfigurieren/dynamisches-dns-ddns-einrichten-bei-company-name
+   - ipv64.net : https://ipv64.net/dyndns
+
+3) Copy the php scripts from this repository to `/usr/syno/bin/ddns/`. And make it executable (chmod 755 ...)
+   - `/usr/syno/bin/ddns/strato46.php` 
+   - `/usr/syno/bin/ddns/ionos46.php` 
+   - `/usr/syno/bin/ddns/ipv64.php` 
+5) Add to that configuration file /etc.defaults/ddns_provider.conf the lines
    
        [STRATO_4_6]
-       modulepath=/usr/syno/bin/ddns/strato46.php
-       queryurl=https://dyndns.strato.com/nic/update
-4) In the control panel you can now select STRATO_4_6 from the dropdown, enter your host name (subdomain.ihredomain.de), user name (ihredomain.de) and password.
+         modulepath=/usr/syno/bin/ddns/strato46.php
+         queryurl=https://dyndns.strato.com/nic/update
+       [IONOS46]
+         modulepath=/usr/syno/bin/ddns/ionos46.php
+         queryurl=https://ipv4.api.hosting.ionos.com/dns/v1/dyndns
+         website=https://ipv4.api.hosting.ionos.com
+       [IPV64.NET]
+         modulepath=/usr/syno/bin/ddns/ipv64.php
+         queryurl=https://ipv64.net/update.php
+         website=https://ipv64.net
+7) In the control panel you can now select `STRATO_4_6`, `IONOS46` or `IPV64.NET` from the dropdown, enter your host name (subdomain.ihredomain.de), user name (ihredomain.de) and password.
+   When using IONOS you need to split the token into two seperate strings and put the first part in user name and the second part in password. The Password field only allows 128 characters.
 
 DSM is executing the DDNS update normally once every 24 hours. But sometimes every few minutes and that causes "abuse " response from Strato and a critical DSM Protocoll Center entry. To avoid that, a minimum interval $ageMin_h with preset to 2.0 hours was added.
 
