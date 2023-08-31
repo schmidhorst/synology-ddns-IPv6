@@ -15,7 +15,7 @@
 # if the IP addresses are sent too often to Strato, then you will get "abuse ..."
 # DSM runs this normally once per day, but in some cases ervery few seconds
 # ==> Workaround: If last update of the logfile is less than ageMin_h, don't send but simply return "nochg ..." to DSM
-$LOG_NAME='/tmp/ddns.log';
+$LOG_NAME='/tmp/ddns_strato.log';
 $ageMin_h=2.0;
 if (file_exists($LOG_NAME)) {
   $age_h=(time()-filemtime($LOG_NAME))/3600;
