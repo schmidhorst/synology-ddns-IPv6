@@ -12,11 +12,15 @@ With the following steps you can use a sub domain of your domain hosted at Strat
    - Ionos     : https://www.ionos.de/hilfe/domains/ip-adresse-konfigurieren/dynamisches-dns-ddns-einrichten-bei-company-name
    - ipv64.net : https://ipv64.net/dyndns
 
-3) Copy the php scripts from this repository to `/usr/syno/bin/ddns/`. And make it executable (chmod 755 ...)
+You can now use the setup script to do steps 2 and 3 for you:
+SSH into your Synology and use:
+`curl -sL https://raw.githubusercontent.com/JensHouses/synology-ddns-IPv6/main/setup.sh | sudo bash`
+
+2) Copy the php scripts from this repository to `/usr/syno/bin/ddns/`. And make it executable (chmod 755 ...)
    - `/usr/syno/bin/ddns/strato46.php` 
    - `/usr/syno/bin/ddns/ionos46.php` 
    - `/usr/syno/bin/ddns/ipv64.php` 
-5) Add to that configuration file /etc.defaults/ddns_provider.conf the lines
+3) Add to that configuration file /etc.defaults/ddns_provider.conf the lines
    
        [STRATO_4_6]
          modulepath=/usr/syno/bin/ddns/strato46.php
@@ -29,7 +33,7 @@ With the following steps you can use a sub domain of your domain hosted at Strat
          modulepath=/usr/syno/bin/ddns/ipv64.php
          queryurl=https://ipv64.net/nic/update
          website=https://ipv64.net
-7) In the control panel you can now select `STRATO_4_6`, `IONOS46` or `IPV64.NET` from the dropdown, enter your host name (subdomain.ihredomain.de), user name (ihredomain.de) and password.
+4) In the control panel you can now select `STRATO_4_6`, `IONOS46` or `IPV64.NET` from the dropdown, enter your host name (subdomain.ihredomain.de), user name (ihredomain.de) and password.
    When using IONOS you need to split the token into two seperate strings and put the first part in user name and the second part in password. The Password field only allows 128 characters.
 
 DSM is executing the DDNS update normally once every 24 hours. But sometimes every few minutes and that causes "abuse " response from Strato and a critical DSM Protocoll Center entry. To avoid that, a minimum interval $ageMin_h with preset to 2.0 hours was added.
