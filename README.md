@@ -13,7 +13,7 @@ With the following steps you can use a sub domain of your domain hosted at Strat
    - ipv64.net : https://ipv64.net/dyndns
 
 You can now use the setup script to do steps 2 and 3 for you:
-SSH into your Synology and use:
+SSH into your Synology and use:   
 `curl -sL https://raw.githubusercontent.com/JensHouses/synology-ddns-IPv6/main/setup.sh | sudo bash`
 
 2) Copy the php scripts from this repository to `/usr/syno/bin/ddns/`. And make it executable (chmod 755 ...)
