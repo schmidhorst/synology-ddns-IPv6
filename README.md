@@ -27,7 +27,7 @@ With the following steps you can use a sub domain of your domain hosted at Strat
          website=https://ipv4.api.hosting.ionos.com
        [IPV64.NET]
          modulepath=/usr/syno/bin/ddns/ipv64.php
-         queryurl=https://ipv64.net/update.php
+         queryurl=https://ipv64.net/nic/update
          website=https://ipv64.net
 7) In the control panel you can now select `STRATO_4_6`, `IONOS46` or `IPV64.NET` from the dropdown, enter your host name (subdomain.ihredomain.de), user name (ihredomain.de) and password.
    When using IONOS you need to split the token into two seperate strings and put the first part in user name and the second part in password. The Password field only allows 128 characters.
