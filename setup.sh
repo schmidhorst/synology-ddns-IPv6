@@ -45,8 +45,8 @@ for file in "${PHP_FILES[@]}"; do
 done
 
 echo "Setup completed!"
-"- Thanks to PhySix66 https://community.synology.com/enu/forum/1/post/130109"
-"- Thanks to mgutt and mweigel https://www.programmierer-forum.de/ipv6-ddns-mit-synology-nas-evtl-auf-andere-nas-router-bertragbar-t319393.htm"
-"- Thanks to hwkr https://gist.github.com/hwkr/906685a75af55714a2b696bc37a0830a"
-"- Thanks to schmidhorst https://github.com/schmidhorst for the inital Repo which i only forked and edited.
+echo "- Thanks to PhySix66 https://community.synology.com/enu/forum/1/post/130109"
+echo "- Thanks to mgutt and mweigel https://www.programmierer-forum.de/ipv6-ddns-mit-synology-nas-evtl-auf-andere-nas-router-bertragbar-t319393.htm"
+echo "- Thanks to hwkr https://gist.github.com/hwkr/906685a75af55714a2b696bc37a0830a"
+echo "- Thanks to schmidhorst https://github.com/schmidhorst for the inital Repo which i only forked and edited."
 
