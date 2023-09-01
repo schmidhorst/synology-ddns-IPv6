@@ -25,6 +25,7 @@ oder folgen sie den Schritten 2+3 manuell:
    - `/usr/syno/bin/ddns/ipv64.php`
    - 
 3) Fügen Sie der Konfigurationsdatei /etc.defaults/ddns_provider.conf die Zeilen hinzu:
+
        [STRATO_4_6]
          modulepath=/usr/syno/bin/ddns/strato46.php
          queryurl=https://dyndns.strato.com/nic/update
