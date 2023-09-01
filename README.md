@@ -1,29 +1,55 @@
 # Synology-DDNS-IPv6
-Synology DSM has still very limitted support for DynDNS including IPv6. Except for synology.me, only IPv4 is supported for all the pre-configured providers. As long as the Internet provider assigns static IPv6 addresses, this is not a problem. In Germany, however, many providers are using dynamic IPv6 prefixes for private individuals, which may change each time a new internet connection is established.
 
-Your internet router may support DDNS including IPv6, but it will not be a solution to access your Synology over IPv6 from outside. There is a single IPv4 global address (common for the router and e.g. your Synology), but there are different global IPv6 addresses for the router and your Synology. Therefore an DynDNS update routine including IPv6 on the Synology is required to make services on the Synology via IPv6 available from outside and not only your router.
+[English Version](README_E.md)    
+Das Synology DSM bietet immer noch eine sehr eingeschränkte Unterstützung für DynDNS inklusive IPv6. Mit Ausnahme von synology.me wird nur IPv4 für alle vorkonfigurierten Anbieter unterstützt. Solange der Internetanbieter statische IPv6-Adressen zuweist, ist dies kein Problem. In Deutschland verwenden jedoch viele Anbieter dynamische IPv6-Präfixe für Privatpersonen, die sich bei jeder neuen Internetverbindung ändern können.
 
-On your Synology device in the folder /usr/syno/bin/ddns/ there are scripts for some providers. If you are going to "Add" in the control panel under "External Access", "DDNS" you will find in the dropdown for "Service Providers" the entries from the file `/etc.defaults/ddns_provider.conf`.
+Ihr Internet-Router unterstützt möglicherweise DDNS einschließlich IPv6, aber dies wird keine Lösung sein, um von außen über IPv6 auf Ihr Synology zuzugreifen. Es gibt eine einzelne globale IPv4-Adresse (gemeinsam für den Router und z.B. Ihr Synology), aber es gibt unterschiedliche globale IPv6-Adressen für den Router und Ihr Synology. Daher ist eine DynDNS-Update-Routine einschließlich IPv6 auf dem Synology erforderlich, um Dienste auf dem Synology über IPv6 von außen verfügbar zu machen und nicht nur Ihren Router.
 
-With the following steps you can use a sub domain of your domain hosted at Strato to access your Synology including IPv6:
-1) Follow the instructions under https://www.strato.de/faq/hosting/so-einfach-richten-sie-dyndns-fuer-ihre-domains-ein/ to setup a sub domain for the Synology on your domain.
-2) Copy the php script from this repository to `/usr/syno/bin/ddns/strato46.php`. And make it executable (chmod 755 ...)
-3) Add to that configuration file /etc.defaults/ddns_provider.conf the lines
-   
+Auf Ihrem Synology-Gerät im Ordner /usr/syno/bin/ddns/ gibt es Skripte für einige Anbieter. Wenn Sie in der Systemsteuerung unter "Externer Zugriff", "DDNS" auf "Hinzufügen" klicken, finden Sie in der Dropdown-Liste für "Serviceanbieter" die Einträge aus der Datei `/etc.defaults/ddns_provider.conf`.
+
+Mit den folgenden Schritten können Sie eine Subdomain Ihrer bei Strato, Ionos oder ipv64.net gehosteten Domain verwenden, um auf Ihr Synology einschließlich IPv6 zuzugreifen:
+1) Befolgen Sie die Anweisungen, um eine Subdomain für das Synology mit DynDns-Domain einzurichten.
+
+   - Strato    : https://www.strato.de/faq/hosting/so-einfach-richten-sie-dyndns-fuer-ihre-domains-ein/
+   - Ionos     : https://www.ionos.de/hilfe/domains/ip-adresse-konfigurieren/dynamisches-dns-ddns-einrichten-bei-company-name
+   - ipv64.net : https://ipv64.net/dyndns
+
+Sie können auch das Setup-Skript verwenden, um die Schritte **2** und **3** automatisch durchzuführen:
+Melden Sie sich dafür per SSH bei Ihrem Synology an und verwenden Sie:
+`curl -sL https://raw.githubusercontent.com/JensHouses/synology-ddns-IPv6/main/setup.sh | sudo bash`
+oder folgen sie den Schritten 2+3 manuell:
+
+2) Kopieren Sie die PHP-Skripte aus diesem Repository nach `/usr/syno/bin/ddns/` und machen Sie sie ausführbar (chmod 755 ...)
+   - `/usr/syno/bin/ddns/strato46.php`
+   - `/usr/syno/bin/ddns/ionos46.php`
+   - `/usr/syno/bin/ddns/ipv64.php`
+   - 
+3) Fügen Sie der Konfigurationsdatei /etc.defaults/ddns_provider.conf die Zeilen hinzu:
        [STRATO_4_6]
-       modulepath=/usr/syno/bin/ddns/strato46.php
-       queryurl=https://dyndns.strato.com/nic/update
-4) In the control panel you can now select STRATO_4_6 from the dropdown, enter your host name (subdomain.ihredomain.de), user name (ihredomain.de) and password.
+         modulepath=/usr/syno/bin/ddns/strato46.php
+         queryurl=https://dyndns.strato.com/nic/update
+       [IONOS46]
+         modulepath=/usr/syno/bin/ddns/ionos46.php
+         queryurl=https://ipv4.api.hosting.ionos.com/dns/v1/dyndns
+         website=https://ipv4.api.hosting.ionos.com
+       [IPV64.NET]
+         modulepath=/usr/syno/bin/ddns/ipv64.php
+         queryurl=https://ipv64.net/nic/update
+         website=https://ipv64.net
+   
+5) In der Systemsteuerung-> Externe Dienste können Sie nun `STRATO_4_6`, `IONOS46` oder `IPV64.NET` aus der Dropdown-Liste auswählen, Ihren Hostnamen (subdomain.ihredomain.de), Benutzernamen (ihredomain.de) und das Passwort eingeben.
+   Bei der Verwendung von IONOS müssen Sie das Token evtl. in zwei separate Zeichenketten aufteilen und den ersten Teil in den Benutzernamen und den zweiten Teil ins Passwort einfügen. Das Passwortfeld erlaubt leider nur 128 Zeichen.
 
-DSM is executing the DDNS update normally once every 24 hours. But sometimes every few minutes and that causes "abuse " response from Strato and a critical DSM Protocoll Center entry. To avoid that, a minimum interval $ageMin_h with preset to 2.0 hours was added.
+DSM führt das DDNS-Update normalerweise alle 24 Stunden aus. Aber manchmal alle paar Minuten und das verursacht eine "Abuse" Antwort und einen kritischen DSM Protokoll Center Eintrag. Um das zu vermeiden, wurde ein min Intervall $ageMin_h mit Voreinstellung auf 2,0 Stunden hinzugefügt.
 
-**Important:** In the control panel in the column "External Address" will still only your IPv4 address occure.
+**Wichtig:** In der Kontrollspalte "Externe Adresse" wird weiterhin nur Ihre IPv4-Adresse angezeigt.
 
-But in /tmp/ddns.log the last line with the response from Strato should be e.g.
+Aber in /tmp/ddns_<dienstname>.log sollte die letzte Zeile mit der Antwort z.B. lauten:
 
 `curl_exec result: nochg 192.XXX.X.X 2003:8106:1234:5678:abcd:ef01:2345:6789`
 
-## Credits and References
-- Thanks to PhySix66 https://community.synology.com/enu/forum/1/post/130109
-- Thanks to mgutt and mweigel https://www.programmierer-forum.de/ipv6-ddns-mit-synology-nas-evtl-auf-andere-nas-router-bertragbar-t319393.htm
-- Thanks to hwkr https://gist.github.com/hwkr/906685a75af55714a2b696bc37a0830a
+## Dank und Referenzen
+- Dank an PhySix66 https://community.synology.com/enu/forum/1/post/130109
+- Dank an mgutt und mweigel https://www.programmierer-forum.de/ipv6-ddns-mit-synology-nas-evtl-auf-andere-nas-router-bertragbar-t319393.htm
+- Dank an hwkr https://gist.github.com/hwkr/906685a75af55714a2b696bc37a0830a
+

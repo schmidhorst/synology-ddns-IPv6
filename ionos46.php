@@ -1,12 +1,12 @@
 #!/usr/bin/php -d open_basedir=/usr/syno/bin/ddns/:/tmp/:/var/log/
-<?php # Attention: No empty line before this!!!! The output must start with 'good' or 'nochg' in the 1st line for an success message 
+<?php # Attention: No empty line before this!!!! The output must start with 'good' or 'nochg' in the 1st line for an success message
 # https://community.synology.com/enu/forum/1/post/130109
 # https://www.computerbase.de/forum/threads/ddns-mit-ipv6.2057194/
 # https://www.programmierer-forum.de/ipv6-ddns-mit-synology-nas-evtl-auf-andere-nas-router-bertragbar-t319393.htm
 # https://gist.github.com/hwkr/906685a75af55714a2b696bc37a0830a
 
 # Remark: If the command "ip -6 addr" is reporting multiple IPv6 addresses, the 1st global one is used.
-#  You may change the command and add the name the interface, to e.g. "ip -6 addr list ovs_eth1 ..." 
+#  You may change the command and add the name the interface, to e.g. "ip -6 addr list ovs_eth1 ..."
 #  The interface names can be extracted from the result of the "ip -6 addr" command output
 # Alternative (see below commented out version): Ask Google for the IPv6, whith which the DSM is online
 
@@ -15,7 +15,7 @@
 # if the IP addresses are sent too often to Strato, then you will get "abuse ..."
 # DSM runs this normally once per day, but in some cases ervery few seconds
 # ==> Workaround: If last update of the logfile is less than ageMin_h, don't send but simply return "nochg ..." to DSM
-$LOG_NAME='/tmp/ddns_strato.log';
+$LOG_NAME='/tmp/ddns_ionos.log';
 $ageMin_h=2.0;
 if (file_exists($LOG_NAME)) {
   $age_h=(time()-filemtime($LOG_NAME))/3600;
@@ -31,7 +31,7 @@ $lastLogLine = `tail -n 1 $LOG_NAME_ESC`;
 $fLOG = fopen($LOG_NAME, 'a+'); # open_basedir option required!
 $date = date('Y-m-d H:i:s');
 $msg="\n$date Start $argv[0]\n";
-# echo("\n\n$date Start\n"); 
+# echo("\n\n$date Start\n");
 if ($argc !== 5) {
   echo "Error: Bad param count $argc instead of 5!\n $argv[0]  <account> '<PW>' <host> <ipv4>\n";
   $msg .= "  Error: Bad param count $argc instead of 5!\n $argv[0] <account> '<PW>' <host> <ipv4>\n";
@@ -39,10 +39,10 @@ if ($argc !== 5) {
   fclose($fLOG);
   exit("Error: Bad param count $argc instead of 5!");
 }
-$account = (string)$argv[1]; # Strato Domain 
-$pwd = (string)$argv[2];
-$hostname = (string)$argv[3]; # sub.domain.de
-$ip = (string)$argv[4];  
+$account = (string)$argv[1]; # Ionos Token Part 1
+$pwd = (string)$argv[2]; # Ionos Token Part 2 ( there is a 128 chars limit )
+$hostname = (string)$argv[3]; # full Domain
+$ip = (string)$argv[4];
 
 // check that the hostname contains '.'
 if (strpos($hostname, '.') === false) {
@@ -90,17 +90,18 @@ if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
   $msg .= "  $ipv6 is not a valid IPv6 address\n";
 }
 
-# https://www.strato.de/faq/hosting/so-einfach-richten-sie-dyndns-fuer-ihre-domains-ein/
-# https://ihredomain.de:DynDNS-Passwort@dyndns.strato.com/nic/update?hostname=subdomain.ihredomain.de&myip=192.XXX.X.X,2003:8106:1234:5678:abcd:ef01:2345:6789  
+# https://www.ionos.de/hilfe/domains/ip-adresse-konfigurieren/dynamisches-dns-ddns-einrichten-bei-company-name
+# https://ipv4.api.hosting.ionos.com/dns/v1/dyndns?q=<token>&ipv4=<ipaddr>&ipv6=<ip6addr>
 
-# $url = 'https://' . $account . ':' . $pwd   . '@dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip=';
-$url = 'https://dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip='; # using AUTH_BASIC
+$url = 'https://ipv4.api.hosting.ionos.com/dns/v1/dyndns?q=' . $account . $pwd . '&ipv4='. $ip;
 $unchanged=true;
-$myips = $ip;
+$myips = '';
 if($ipv6 != '') { # IPv4 and IPv6 available
-  $myips .= ',';
+  $myips .= '&ipv6=';
   $unchanged=str_contains($lastLogLine, $ipv6);
-}  
+  $msg .= "last_log_line: $lastLogLine\n";
+  $msg .= "contains?: $unchanged\n";
+}
 if($ipv6 != '') {
   $myips .= $ipv6;
 }
@@ -124,14 +125,15 @@ if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
   $agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
   curl_setopt($req, CURLOPT_USERAGENT, $agent);
   # CURLOPT_AUTOREFERER
-  curl_setopt($req, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-  curl_setopt($req, CURLOPT_USERPWD, "$account:$pwd");
+  #curl_setopt($req, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+  #curl_setopt($req, CURLOPT_USERPWD, "$account:$pwd");
 
   # $res = 'nochg 9.99.999.999 2003:99:99:99:99:99:99:99'; # my be used for debugging
   # $res = 'badauth test';
   $res = curl_exec($req);
+  $http_code = curl_getinfo($req, CURLINFO_HTTP_CODE);
   curl_close($req);
-  $msg .= "  curl_exec result: $res";
+  #$msg .= "  curl_exec http result: $http_code";
 } else {
   $msg .= "  sending skipped as last update was only $age_h h ago to avoid 'abuse ...' message\n";
   $msg .= "  returned result: $res";
@@ -149,8 +151,12 @@ if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
     # badresolv - Failed to connect to because failed to resolve provider address.
     # badconn - Failed to connect to provider because connection timeout.
 
-echo("$res"); # The script output needs to start(!!) with "nochg" or "good" to avoid error messages in the synology protocol list.
-if ( (strpos($res, "good") !== 0) && (strpos($res, "nochg") !== 0)) { 
+if ($http_code = 200) {
+	echo("good"); # The script output needs to start(!!) with "nochg" or "good" to avoid error messages in the synology protocol list.
+} else {
+	echo("$res");
+}
+if ( (strpos($res, "good") !== 0) && (strpos($res, "nochg") !== 0)) {
   syslog(LOG_ERR, "$argv[0]: $res, see /tmp/ddns.log");
 }
 fwrite($fLOG, "$msg");

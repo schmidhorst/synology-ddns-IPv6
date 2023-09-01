@@ -15,7 +15,7 @@
 # if the IP addresses are sent too often to Strato, then you will get "abuse ..."
 # DSM runs this normally once per day, but in some cases ervery few seconds
 # ==> Workaround: If last update of the logfile is less than ageMin_h, don't send but simply return "nochg ..." to DSM
-$LOG_NAME='/tmp/ddns_strato.log';
+$LOG_NAME='/tmp/ddns_ipv64.log';
 $ageMin_h=2.0;
 if (file_exists($LOG_NAME)) {
   $age_h=(time()-filemtime($LOG_NAME))/3600;
@@ -39,9 +39,9 @@ if ($argc !== 5) {
   fclose($fLOG);
   exit("Error: Bad param count $argc instead of 5!");
 }
-$account = (string)$argv[1]; # Strato Domain 
+$account = (string)$argv[1]; 
 $pwd = (string)$argv[2];
-$hostname = (string)$argv[3]; # sub.domain.de
+$hostname = (string)$argv[3]; 
 $ip = (string)$argv[4];  
 
 // check that the hostname contains '.'
@@ -90,15 +90,16 @@ if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
   $msg .= "  $ipv6 is not a valid IPv6 address\n";
 }
 
-# https://www.strato.de/faq/hosting/so-einfach-richten-sie-dyndns-fuer-ihre-domains-ein/
-# https://ihredomain.de:DynDNS-Passwort@dyndns.strato.com/nic/update?hostname=subdomain.ihredomain.de&myip=192.XXX.X.X,2003:8106:1234:5678:abcd:ef01:2345:6789  
+# 
+# https://ipv64.net/dyndns
+# https://ipv64.net/update.php?key=<token>&domain=<domain>&ip=<ipaddr>&ip6=<ip6addr>&output=min
 
 # $url = 'https://' . $account . ':' . $pwd   . '@dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip=';
-$url = 'https://dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip='; # using AUTH_BASIC
+$url = 'https://ipv64.net/nic/update?output=min&key=' . $pwd . '&domain=' . $hostname . '&ip='; 
 $unchanged=true;
 $myips = $ip;
 if($ipv6 != '') { # IPv4 and IPv6 available
-  $myips .= ',';
+  $myips .= '&ip6=';
   $unchanged=str_contains($lastLogLine, $ipv6);
 }  
 if($ipv6 != '') {
@@ -124,8 +125,8 @@ if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
   $agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
   curl_setopt($req, CURLOPT_USERAGENT, $agent);
   # CURLOPT_AUTOREFERER
-  curl_setopt($req, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-  curl_setopt($req, CURLOPT_USERPWD, "$account:$pwd");
+  #curl_setopt($req, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+  #curl_setopt($req, CURLOPT_USERPWD, "$account:$pwd");
 
   # $res = 'nochg 9.99.999.999 2003:99:99:99:99:99:99:99'; # my be used for debugging
   # $res = 'badauth test';
