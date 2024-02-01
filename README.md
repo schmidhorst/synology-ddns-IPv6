@@ -38,14 +38,14 @@ oder folgen sie den Schritten 2+3 manuell:
          queryurl=https://ipv64.net/nic/update
          website=https://ipv64.net
    
-5) In der Systemsteuerung-> Externe Dienste können Sie nun `STRATO_4_6`, `IONOS46` oder `IPV64.NET` aus der Dropdown-Liste auswählen, Ihren Hostnamen (subdomain.ihredomain.de), Benutzernamen (ihredomain.de) und das Passwort eingeben.
+4) In der Systemsteuerung-> Externe Dienste können Sie nun `STRATO_4_6`, `IONOS46` oder `IPV64.NET` aus der Dropdown-Liste auswählen, Ihren Hostnamen (subdomain.ihredomain.de), Benutzernamen (ihredomain.de) und das Passwort eingeben.
    Bei der Verwendung von IONOS müssen Sie das Token evtl. in zwei separate Zeichenketten aufteilen und den ersten Teil in den Benutzernamen und den zweiten Teil ins Passwort einfügen. Das Passwortfeld erlaubt leider nur 128 Zeichen.
 
 DSM führt das DDNS-Update normalerweise alle 24 Stunden aus. Aber manchmal alle paar Minuten und das verursacht eine "Abuse" Antwort und einen kritischen DSM Protokoll Center Eintrag. Um das zu vermeiden, wurde ein min Intervall $ageMin_h mit Voreinstellung auf 2,0 Stunden hinzugefügt.
 
 **Wichtig:** 
 - In der Kontrollspalte "Externe Adresse" wird weiterhin nur Ihre IPv4-Adresse angezeigt.
-- Nach einem DSM-Versions-Update fehlen u.U. die php-Dateien unter /usr/syno/bin/ddns/ und müssen erneut dorthin kopiert werden (incl. chmod 755)!
+- Nach einem DSM-Versions-Update müssen u.U. die Schritte 2 und 3 wiederholt werden!
 
 Aber in /tmp/ddns_<dienstname>.log sollte die letzte Zeile mit der Antwort z.B. lauten:
 
