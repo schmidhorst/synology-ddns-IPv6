@@ -45,7 +45,7 @@ DSM führt das DDNS-Update normalerweise alle 24 Stunden aus. Aber manchmal alle
 
 **Wichtig:** 
 - In der Kontrollspalte "Externe Adresse" wird weiterhin nur Ihre IPv4-Adresse angezeigt.
-- Nach einem DSM-Versions-Update fehlen u.U. die php-Dateien unter /usr/syno/bin/ddns/ und müssen erneut dorthin kopiert werden!
+- Nach einem DSM-Versions-Update fehlen u.U. die php-Dateien unter /usr/syno/bin/ddns/ und müssen erneut dorthin kopiert werden (incl. chmod 755)!
 
 Aber in /tmp/ddns_<dienstname>.log sollte die letzte Zeile mit der Antwort z.B. lauten:
 
