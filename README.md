@@ -43,7 +43,9 @@ oder folgen sie den Schritten 2+3 manuell:
 
 DSM führt das DDNS-Update normalerweise alle 24 Stunden aus. Aber manchmal alle paar Minuten und das verursacht eine "Abuse" Antwort und einen kritischen DSM Protokoll Center Eintrag. Um das zu vermeiden, wurde ein min Intervall $ageMin_h mit Voreinstellung auf 2,0 Stunden hinzugefügt.
 
-**Wichtig:** In der Kontrollspalte "Externe Adresse" wird weiterhin nur Ihre IPv4-Adresse angezeigt.
+**Wichtig:** 
+- In der Kontrollspalte "Externe Adresse" wird weiterhin nur Ihre IPv4-Adresse angezeigt.
+- Nach einem DSM-Versions-Update fehlen u.U. die php-Dateien unter /usr/syno/bin/ddns/ und müssen erneut dorthin kopiert werden!
 
 Aber in /tmp/ddns_<dienstname>.log sollte die letzte Zeile mit der Antwort z.B. lauten:
 
