@@ -38,7 +38,9 @@ SSH into your Synology and use:
 
 DSM is executing the DDNS update normally once every 24 hours. But sometimes every few minutes and that causes "abuse " response from Strato and a critical DSM Protocoll Center entry. To avoid that, a minimum interval $ageMin_h with preset to 2.0 hours was added.
 
-**Important:** In the control panel in the column "External Address" will still only your IPv4 address occure.
+**Important:** 
+- In the control panel in the column "External Address" will still only your IPv4 address occure.
+- After a DSM version update the new files under /usr/syno/bin/ddns may be missing and need to be copied again (incl. chmod 777)
 
 But in /tmp/ddns.log the last line with the response from Strato should be e.g.
 
