@@ -40,7 +40,7 @@ DSM is executing the DDNS update normally once every 24 hours. But sometimes eve
 
 **Important:** 
 - In the control panel in the column "External Address" will still only your IPv4 address occure.
-- After a DSM version update the new files under /usr/syno/bin/ddns may be missing and need to be copied again (incl. chmod 777)
+- After a DSM version update the new files under /usr/syno/bin/ddns may be missing and need to be copied again (incl. chmod 755)
 
 But in /tmp/ddns.log the last line with the response from Strato should be e.g.
 
