@@ -65,7 +65,9 @@ if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
 # https://forum.feste-ip.net/viewtopic.php?t=468
 # IPV6=$(ip addr list eth0 | grep "global" | cut -d ' ' -f6 | cut -d/ -f1)
 # https://superuser.com/questions/468727/how-to-get-the-ipv6-ip-address-in-linux
-$cmd = "ip -6 addr | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80  | grep -v ^fd00";
+# $cmd = "ip -6 addr | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80  | grep -v ^fd00";
+# 2024-10-22, input from nahcir:
+$cmd = "ip -6 addr | grep inet6 | grep -v deprecated | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80 | grep -v ^fd";
 $cmd .= " 2>&1";
 # $msg .= "cmd: $cmd\n";
 $ipv6multi = shell_exec($cmd);
