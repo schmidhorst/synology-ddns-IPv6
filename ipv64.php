@@ -66,7 +66,7 @@ if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
 # IPV6=$(ip addr list eth0 | grep "global" | cut -d ' ' -f6 | cut -d/ -f1)
 # https://superuser.com/questions/468727/how-to-get-the-ipv6-ip-address-in-linux
 # $cmd = "ip -6 addr | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80  | grep -v ^fd00";
-# 2024-10-22, input from nahcir:
+# 2024-10-22, issue #4 from hseliger:
 $cmd = "ip -6 addr | grep inet6 | grep -v deprecated | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80 | grep -v ^fd";
 $cmd .= " 2>&1";
 # $msg .= "cmd: $cmd\n";
