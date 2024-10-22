@@ -5,6 +5,13 @@
 # https://www.programmierer-forum.de/ipv6-ddns-mit-synology-nas-evtl-auf-andere-nas-router-bertragbar-t319393.htm
 # https://gist.github.com/hwkr/906685a75af55714a2b696bc37a0830a
 
+# https://www.synology-forum.de/threads/dyndns-adresse-mit-reverse-proxy-endet-an-fritzbox.119221/page-2
+# https://<username>:<passwd>@dyndns.strato.com/nic/update?hostname=<domain>&myip=0.0.0.0,<ip6addr>&subhostprefix=<ip6lanprefix>
+
+# https://nocksoft.de/tutorials/dyndns-fuer-ipv6-server-hinter-fritzbox-konfigurieren/
+# https://www.heise.de/ratgeber/IPv6-Freigaben-mit-Namensdienst-auf-Fritzboxen-nutzen-6234026.html
+# 
+
 # Remark: If the command "ip -6 addr" is reporting multiple IPv6 addresses, the 1st global one is used.
 #  You may change the command and add the name the interface, to e.g. "ip -6 addr list ovs_eth1 ..." 
 #  The interface names can be extracted from the result of the "ip -6 addr" command output
@@ -15,6 +22,8 @@
 # if the IP addresses are sent too often to Strato, then you will get "abuse ..."
 # DSM runs this normally once per day, but in some cases ervery few seconds
 # ==> Workaround: If last update of the logfile is less than ageMin_h, don't send but simply return "nochg ..." to DSM
+$syslogSuccess=true; # Generate LogCenter entry not only for failure
+$syslogSkipped=true; # Generate LogCenter entry if it was tirggerd, but skipped
 $LOG_NAME='/tmp/ddns_strato.log';
 $ageMin_h=2.0;
 if (file_exists($LOG_NAME)) {
@@ -37,7 +46,7 @@ if ($argc !== 5) {
   $msg .= "  Error: Bad param count $argc instead of 5!\n $argv[0] <account> '<PW>' <host> <ipv4>\n";
   fwrite($fLOG, "$msg");
   fclose($fLOG);
-  exit("Error: Bad param count $argc instead of 5!");
+  exit("Error: Bad param count $argc instead of 5!\n");
 }
 $account = (string)$argv[1]; # Strato Domain 
 $pwd = (string)$argv[2];
@@ -109,7 +118,7 @@ if($ipv6 != '') {
 $url .=  $myips;
 $msg .= "  used url: $url\n";
 
-$res="nochg $ip $ipv6\n";
+$res="nochg $ip $ipv6\n"; # preset, optionally changed later
 # $msg .= "  last sending before $age_h h\n";
 if (! str_contains($lastLogLine, $ip) ) {
   $unchanged=false;
@@ -134,9 +143,25 @@ if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
   $res = curl_exec($req);
   curl_close($req);
   $msg .= "  curl_exec result: $res";
+  if ( (strpos($res, "good") !== 0) && (strpos($res, "nochg") !== 0) ) { 
+    syslog(LOG_ERR, "$argv[0]: $res, see /tmp/ddns.log");
+    # 0x13100012: "System failed to register [@1] to [@2] in DDNS server [@3] because of [@4]."
+    $cmd = "synologset1 sys err 0x13100012 \"$myips\" \"$hostname\" \"$0\" \"$res\"";
+    # $cmd = "xxx";
+    shell_exec($cmd);
+  } elseif ($syslogSuccess === true) {
+    # 13100011: "System successfully registered [@1] to [@2] in DDNS server [@3]."
+    $cmd = "synologset1 sys info 0x13100011 \"$myips\" \"$hostname\" \"" . __FILE__ . "\"";
+    shell_exec($cmd);
+  }  
 } else {
-  $msg .= "  sending skipped as last update was only $age_h h ago to avoid 'abuse ...' message\n";
-  $msg .= "  returned result: $res";
+  $msg .= "  sending skipped as last update was only " . number_format($age_h, 3) . " h ago to avoid 'abuse ...' message\n";
+  $msg .= "  old result was: $res";
+  if ($syslogSkipped === true) {
+    # 0x11100000: [@1]"
+    $cmd = "synologset1 sys info 0x11100000 \"". __FILE__ . ": New DynDNS registration to $hostname skipped to avoid 'abuse ..' because unchanged $myips and done before " . number_format($age_h, 3) . " hours.\"";
+    shell_exec($cmd);
+  }
 }
 
 # https://community.synology.com/enu/forum/17/post/57640, normal responses:
@@ -151,9 +176,7 @@ if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
     # badresolv - Failed to connect to because failed to resolve provider address.
     # badconn - Failed to connect to provider because connection timeout.
 
-echo("$res"); # The script output needs to start(!!) with "nochg" or "good" to avoid error messages in the synology protocol list.
-if ( (strpos($res, "good") !== 0) && (strpos($res, "nochg") !== 0)) { 
-  syslog(LOG_ERR, "$argv[0]: $res, see /tmp/ddns.log");
-}
+echo("$res"); # The script output needs to start(!!) with "nochg" or "good" to avoid error messages in the synology protocol list like 
+# System failed to register [<ip4>] to [<url>] in DDNS server [<scriptName>] because of [service_ddns_error_unknown].
 fwrite($fLOG, "$msg");
 fclose($fLOG);

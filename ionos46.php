@@ -8,9 +8,8 @@
 # Remark: If the command "ip -6 addr" is reporting multiple IPv6 addresses, the 1st global one is used.
 #  You may change the command and add the name the interface, to e.g. "ip -6 addr list ovs_eth1 ..."
 #  The interface names can be extracted from the result of the "ip -6 addr" command output
-# Alternative (see below commented out version): Ask Google for the IPv6, whith which the DSM is online
 
-# Parameters: 1=account (Strato Domain), 2=pwd (use single quotes!) 3=hostname (incl. sub domain), 4=ip (IPv4)
+# Parameters: 1=account (Ionos Token Part 1), 2=pwd (Ionos Token Part 2) 3=hostname (incl. sub domain), 4=ip (IPv4)
 
 # if the IP addresses are sent too often to Strato, then you will get "abuse ..."
 # DSM runs this normally once per day, but in some cases ervery few seconds
@@ -77,7 +76,7 @@ $msg .= "  used IPv6: $lines[0]\n";
 # msg .= "IP2: $lines[1]\n";
 $ipv6=$lines[0];
 
-# Alternative Solution: Get the online IPv6 of the disk station:
+# Get the online IPv6 of the disk station is no more working!
 # $ipv6 = get_data('https://domains.google.com/checkip');
 
 if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
