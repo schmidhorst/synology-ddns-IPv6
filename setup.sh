@@ -4,7 +4,7 @@ CONFIG_FILE="/etc.defaults/ddns_provider.conf"
 TMP_CONFIG="/tmp/ddns_tmp_config"
 
 #Repo info
-GITHUB_REPO_BASE="https://raw.githubusercontent.com/JensHouses/synology-ddns-IPv6/main"
+GITHUB_REPO_BASE="https://raw.githubusercontent.com/schmidhorst/synology-ddns-IPv6/main"
 PHP_FILES=("strato46.php" "ionos46.php" "ipv64.php")
 
 # DDNS Providers
