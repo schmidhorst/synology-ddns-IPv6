@@ -45,7 +45,7 @@ DSM führt das DDNS-Update normalerweise alle 24 Stunden aus. Aber manchmal alle
 
 **Wichtig:** 
 - In der Kontrollspalte "Externe Adresse" wird weiterhin nur Ihre IPv4-Adresse angezeigt.
-- Nach einem DSM-Versions-Update müssen u.U. die Schritte 2 und 3 wiederholt werden!
+- Nach einem DSM-Versions-Update müssen u.U. die Schritte 2 und 3 wiederholt werden! Es kann auch in der Systemsteuerung im Aufgabenplaner eine "Ausgelöste Aufgabe" erstellt und das install.sh-Skript bei jedem Reboot als root-User erneut ausgeführt werden. Dann braucht man beim Versionsupdate nicht mehr daran zu denken.
 
 Aber in /tmp/ddns_<dienstname>.log sollte die letzte Zeile mit der Antwort z.B. lauten:
 
