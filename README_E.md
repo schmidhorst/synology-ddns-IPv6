@@ -40,7 +40,7 @@ DSM is executing the DDNS update normally once every 24 hours. But sometimes eve
 
 **Important:** 
 - In the control panel in the column "External Address" will still only your IPv4 address occure.
-- After a DSM version update the steps 2 and 3 may be needed to repeat again.
+- After a DSM version update the steps 2 and 3 may be needed to repeat again. Or you are setting up a scheduled task to run the install.sh as root at each re-boot instead of manual re-installation after DSM version update.
 
 But in /tmp/ddns.log the last line with the response from Strato should be e.g.
 
