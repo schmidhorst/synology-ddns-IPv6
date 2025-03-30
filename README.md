@@ -16,7 +16,7 @@ Mit den folgenden Schritten können Sie eine Subdomain Ihrer bei Strato, Ionos o
 
 Sie können auch das Setup-Skript verwenden, um die Schritte **2** und **3** automatisch durchzuführen:
 Melden Sie sich dafür per SSH bei Ihrem Synology an und verwenden Sie:
-`curl -sL https://raw.githubusercontent.com/JensHouses/synology-ddns-IPv6/main/setup.sh | sudo bash`
+`curl -sL https://raw.githubusercontent.com/schmidhorst/synology-ddns-IPv6/main/setup.sh | sudo bash`
 oder folgen sie den Schritten 2+3 manuell:
 
 2) Kopieren Sie die PHP-Skripte aus diesem Repository nach `/usr/syno/bin/ddns/` und machen Sie sie ausführbar (chmod 755 ...)
