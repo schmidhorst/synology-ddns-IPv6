@@ -14,7 +14,7 @@ With the following steps you can use a sub domain of your domain hosted at Strat
 
 You can now use the setup script to do steps 2 and 3 for you:
 SSH into your Synology and use:   
-`curl -sL https://raw.githubusercontent.com/JensHouses/synology-ddns-IPv6/main/setup.sh | sudo bash`
+`curl -sL https://raw.githubusercontent.com/schmidhorst/synology-ddns-IPv6/main/setup.sh | sudo bash`
 
 2) Copy the php scripts from this repository to `/usr/syno/bin/ddns/`. And make it executable (chmod 755 ...)
    - `/usr/syno/bin/ddns/strato46.php` 
@@ -40,7 +40,7 @@ DSM is executing the DDNS update normally once every 24 hours. But sometimes eve
 
 **Important:** 
 - In the control panel in the column "External Address" will still only your IPv4 address occure.
-- After a DSM version update the steps 2 and 3 may be needed to repeat again.
+- After a DSM version update the steps 2 and 3 may be needed to repeat again. Or you are setting up a scheduled task to run the setup.sh as root at each re-boot instead of manual re-installation after DSM version update.
 
 But in /tmp/ddns.log the last line with the response from Strato should be e.g.
 
