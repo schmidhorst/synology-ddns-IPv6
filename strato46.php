@@ -15,17 +15,45 @@
 # Remark: If the command "ip -6 addr" is reporting multiple IPv6 addresses, the 1st global one is used.
 #  You may change the command and add the name the interface, to e.g. "ip -6 addr list ovs_eth1 ..." 
 #  The interface names can be extracted from the result of the "ip -6 addr" command output
-# Alternative (see below commented out version): Ask Google for the IPv6, whith which the DSM is online
 
 # Parameters: 1=account (Strato Domain), 2=pwd (use single quotes!) 3=hostname (incl. sub domain), 4=ip (IPv4)
 
 # if the IP addresses are sent too often to Strato, then you will get "abuse ..."
 # DSM runs this normally once per day, but in some cases ervery few seconds
 # ==> Workaround: If last update of the logfile is less than ageMin_h, don't send but simply return "nochg ..." to DSM
-$syslogSuccess=true; # Generate LogCenter entry not only for failure
-$syslogSkipped=true; # Generate LogCenter entry if it was tirggerd, but skipped
+$syslogSuccess=false; # true: Generate LogCenter entry always, not only for failure
+$syslogSkipped=false; # true: Generate LogCenter entry if it was tirggerd, but skipped
 $LOG_NAME='/tmp/ddns_strato.log';
 $ageMin_h=2.0;
+
+
+function isCGNATIPv4(string $ip): bool {
+  if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+    return false;
+    }
+  $long = ip2long($ip);
+  $start = ip2long("100.64.0.0");
+  $end   = ip2long("100.127.255.255");
+  return ($long >= $start && $long <= $end);
+  }
+
+function isGlobalIPv4_DSaware(string $ip): bool {
+  if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+    return false;     // ungültige IPv4?
+    }
+  // Private und reservierte ausschließen
+  if (filter_var($ip, FILTER_VALIDATE_IP, [ 'flags' => FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE]) === false) {
+    return false;
+    }
+  if (isCGNATIPv4($ip)) {
+    return false;
+    }
+  return true; // echte öffentliche IPv4
+  }
+
+
+
+$lastLogLine='';
 if (file_exists($LOG_NAME)) {
   $age_h=(time()-filemtime($LOG_NAME))/3600;
 } else {
@@ -39,8 +67,9 @@ $lastLogLine = `tail -n 1 $LOG_NAME_ESC`;
 # returned result: nochg 87.175.192.182 2003:c8:72e:a000:9209:d0ff:fe05:c05f
 $fLOG = fopen($LOG_NAME, 'a+'); # open_basedir option required!
 $date = date('Y-m-d H:i:s');
-$msg="\n$date Start $argv[0]\n";
-# echo("\n\n$date Start\n"); 
+$user=get_current_user();
+$msg="\n$date Start $argv[0] as $user\n";
+# echo("\n\n$date Start\n");
 if ($argc !== 5) {
   echo "Error: Bad param count $argc instead of 5!\n $argv[0]  <account> '<PW>' <host> <ipv4>\n";
   $msg .= "  Error: Bad param count $argc instead of 5!\n $argv[0] <account> '<PW>' <host> <ipv4>\n";
@@ -48,10 +77,18 @@ if ($argc !== 5) {
   fclose($fLOG);
   exit("Error: Bad param count $argc instead of 5!\n");
 }
+else {
+  $msg .= ", ParamCount $argc is ok.";
+}
+# $str   = @file_get_contents('/proc/uptime'); # Failed to open stream: Operation not permitted
+$str=shell_exec('cat /proc/uptime');
+$up_seconds = floatval($str);
+$msg .= " System boot was before $up_seconds seconds\n";
+
 $account = (string)$argv[1]; # Strato Domain 
 $pwd = (string)$argv[2];
 $hostname = (string)$argv[3]; # sub.domain.de
-$ip = (string)$argv[4];  
+$ip = (string)$argv[4]; # eigene IPv4
 
 // check that the hostname contains '.'
 if (strpos($hostname, '.') === false) {
@@ -81,20 +118,32 @@ $cmd .= " 2>&1";
 # $msg .= "cmd: $cmd\n";
 $ipv6multi = shell_exec($cmd);
 # msg .= "ipv6multi $ipv6multi"; # if more than one LAN active: multiple adresses
-$lines = explode("\n", $ipv6multi);
-$msg .= "  used IPv6: $lines[0]\n";
-# msg .= "IP2: $lines[1]\n";
-$ipv6=$lines[0];
-
-# Alternative Solution: Get the online IPv6 of the disk station:
-# $ipv6 = get_data('https://domains.google.com/checkip');
+if ( $ipv6multi == "" ) { # Tethering?
+  # Alternative Solution: Get the IPv6 of the disk station from outside:
+  # Hint Google https://domains.google.com/checkip is no more working!
+  # using https://ip6only.me/api/:
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, 'https://ip6only.me/api/');
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); # Set so curl_exec returns the result instead of outputting it.
+  $response = curl_exec($ch);
+  curl_close($ch);
+  $ipv6 = explode(",", $response)[1];
+  }
+else {
+  $lines = explode("\n", $ipv6multi);
+  $msg .= "  used IPv6: '$lines[0]'";
+  # msg .= ", IP2: $lines[1]";
+  $ipv6=$lines[0];
+  }
 
 if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
   if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE)) {
-    # echo("$ipv6 is a valid IPv6 address\n");
+    $msg .= ", $ipv6 is a valid IPv6 address\n";
   } else {
-    echo("$ipv6 is not a valid global IPv6 address\n");
-    $msg .= "  $ipv6 is not a valid global IPv6 address\n";
+    $cmd = "ip -6 addr | grep $ipv6";
+    $cmd .= " 2>&1";
+    $ipv6b = shell_exec($cmd);
+    $msg .= "  trying to use $ipv6b\n    even it's possibly not a valid global IPv6 address but an private Range\n";
   }
 } else {
   echo("$ipv6 is not a valid IPv6 address\n");
@@ -104,18 +153,62 @@ if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
 # https://www.strato.de/faq/hosting/so-einfach-richten-sie-dyndns-fuer-ihre-domains-ein/
 # https://ihredomain.de:DynDNS-Passwort@dyndns.strato.com/nic/update?hostname=subdomain.ihredomain.de&myip=192.XXX.X.X,2003:8106:1234:5678:abcd:ef01:2345:6789  
 
+# https://www.synology-forum.de/threads/ddns-bei-strato-funktioniert-von-heute-auf-morgen-nicht-mehr.139112/post-1250860
+# https://<username>:<passwd>@dyndns.strato.com/nic/update?hostname=<domain>&myip=<ipaddr>,<ip6addr>,&wildcard=NO&mx=NO&backmx=NO
+
+# https://www.synology-forum.de/threads/ddns-bei-strato-funktioniert-von-heute-auf-morgen-nicht-mehr.139112/post-1250984
+# Strato setzt für seine Domäne ein Zertifikat ein, das seit 18.07.2025 gültig ist und vermutlich in den letzten Tagen ausgerollt worden ist. Dieses führt zum Stammzertifikat
+#    „Sectigo Public Server Authentication Root R46“ 
+# und dieses fehlt offenbar bei Synology in der Liste der Stammzertifikate. Es ist auch erst wenige Jahre alt und wird erst seit wenigen Wochen für neu ausgestellte Zertifikate verwendet (lt. deren Website, Link siehe unten). Somit kristallisiert sich insbesondere ein Problem für ältere NAS-Modelle heraus, die keine Updates mehr erhalten (zurzeit gilt das offenbar auch für aktuelle Modelle).
+
+# Ob Strato seine Zertifikate nochmals austauscht gegen die eines anderen Zertifizierers würde ich jetzt eher nicht erwarten.
+
+# Wer jetzt von diesem Problem betroffen ist, sollte bei Synology Druck machen, dass sie entsprechende Updates der Stammzertifikate zur Verfügung stellen mögen. Für DSM 7.2.2 ist heute Update 4 erschienen, vielleicht klappt es damit ja schon. Ich kann das Update leider nicht testen, da mein NAS zu alt ist.
+
+# Das Stammzertifikat "RSA: Sectigo Public Server Authentication Root R46" kann man übrigens hier herunterladen https://www.sectigo.com/knowledge-base/detail/Sectigo-Root-Certificates/kA03l000000c4KV (ziemlich am Ende der Seite unter "Are new root certificates being added?", DV/OV/EV TLS Roots) oder einfach aus den Zertifikaten eines aktuellen Browsers oder Betriebssystems exportieren.
+
+# https://www.synology-forum.de/threads/ddns-bei-strato-funktioniert-von-heute-auf-morgen-nicht-mehr.139112/post-1251054
+# For Synology DSM 7 this is the proper way to install your private CA certificates:
+#   Copy the ca certs ending in .crt in the directory: /var/db/ca-certificates and change (chmod) permissions of the certs to 644.
+#   Then execute the script provided by synology: update-ca-certificates.sh
+#   Reboot
+# Das hat fehlerfrei funktioniert und nach dem reboot habe ich den DDNS Dienst wieder aktiviert und sofort war alles wieder grün.
+
+
+# Zertifikats-Details anzeigen: openssl x509 -in /etc/ssl/certs/SecureTrust_CA.pem -noout -text
+
 # $url = 'https://' . $account . ':' . $pwd   . '@dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip=';
 $url = 'https://dyndns.strato.com/nic/update?hostname=' . $hostname . '&myip='; # using AUTH_BASIC
 $unchanged=true;
-$myips = $ip;
-if($ipv6 != '') { # IPv4 and IPv6 available
-  $myips .= ',';
-  $unchanged=str_contains($lastLogLine, $ipv6);
-}  
-if($ipv6 != '') {
+$myips = '';
+if (isGlobalIPv4_DSaware($ip)) {
+  $myips = $ip;
+  }
+else {
+  $msg .= "'$ip' is not a public IPv4 (PRIVATE, RESERVED or CGNAT)\n";
+  }
+if($ipv6 != '') { # IPv6 available
+  if ($myips != '') {
+    $myips .= ',';
+    }  
   $myips .= $ipv6;
-}
+  $unchanged=str_contains($lastLogLine, $ipv6);
+  $msg .= "last_log_line (previous run): '$lastLogLine'\n";
+  $msg .= "actual ipv6='$ipv6': $unchanged\n";
+  }
+if ($myips == "") {
+  syslog(LOG_ERR, "$argv[0]: No public IP address found, see $LOG_NAME");
+  # 0x13100012: "System failed to register [@1] to [@2] in DDNS server [@3] because of [@4]."
+  $cmd = "synologset1 sys err 0x13100012 \"$myips\" \"$hostname\" \"$0\" \"no public IP address found\"";
+  # $cmd = "xxx";
+  shell_exec($cmd);
+  $msg .= "actual IPv4='$ip', ipv6='$ipv6', but none of them seems to be available from internet\n";
+  fwrite($fLOG, "$msg");
+  fclose($fLOG);
+  exit("Error: No public IP address found!\n");
+  }
 $url .=  $myips;
+# $url .= ",&wildcard=NO&mx=NO&backmx=NO";
 $msg .= "  used url: $url\n";
 
 $res="nochg $ip $ipv6\n"; # preset, optionally changed later
@@ -140,23 +233,34 @@ if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
 
   # $res = 'nochg 9.99.999.999 2003:99:99:99:99:99:99:99'; # my be used for debugging
   # $res = 'badauth test';
-  $res = curl_exec($req);
+  $res = rtrim(curl_exec($req), "\n");
+  // also get the error and response code
+  $errors = curl_error($req);
+  # $response = curl_getinfo($req, CURLINFO_HTTP_CODE);
+  $responseArray = curl_getinfo($req);
+
+  # CURLINFO_SSL_VERIFYRESULT https://www.php.net/manual/en/function.curl-getinfo.php
+
   curl_close($req);
-  $msg .= "  curl_exec result: $res";
-  if ( (strpos($res, "good") !== 0) && (strpos($res, "nochg") !== 0) ) { 
-    syslog(LOG_ERR, "$argv[0]: $res, see /tmp/ddns.log");
+  # if ( $res == '') {
+  # $msg .= "curl_exec error='$errors', response='$response'\n";
+
+  if ( (strpos($res, "good") !== 0) && (strpos($res, "nochg") !== 0) ) { # not ok
+    syslog(LOG_ERR, "$argv[0]: $res, see $LOG_NAME");
     # 0x13100012: "System failed to register [@1] to [@2] in DDNS server [@3] because of [@4]."
     $cmd = "synologset1 sys err 0x13100012 \"$myips\" \"$hostname\" \"$0\" \"$res\"";
     # $cmd = "xxx";
     shell_exec($cmd);
-  } elseif ($syslogSuccess === true) {
+    $msg .= json_encode($responseArray);
+  } elseif ($syslogSuccess === true) { # ok
     # 13100011: "System successfully registered [@1] to [@2] in DDNS server [@3]."
     $cmd = "synologset1 sys info 0x13100011 \"$myips\" \"$hostname\" \"" . __FILE__ . "\"";
-    shell_exec($cmd);
+    shell_exec($cmd); # SysLog-Entry
   }  
-} else {
+  $msg .= "  curl_exec result (expected: 'good ...' or 'nochg ...'): '$res'\n";
+} else { # skipped
   $msg .= "  sending skipped as last update was only " . number_format($age_h, 3) . " h ago to avoid 'abuse ...' message\n";
-  $msg .= "  old result was: $res";
+  $msg .= "  old result was: '$lastLogLine'";
   if ($syslogSkipped === true) {
     # 0x11100000: [@1]"
     $cmd = "synologset1 sys info 0x11100000 \"". __FILE__ . ": New DynDNS registration to $hostname skipped to avoid 'abuse ..' because unchanged $myips and done before " . number_format($age_h, 3) . " hours.\"";
@@ -178,5 +282,10 @@ if ( ($age_h > $ageMin_h) || (! $unchanged ) )  {
 
 echo("$res"); # The script output needs to start(!!) with "nochg" or "good" to avoid error messages in the synology protocol list like 
 # System failed to register [<ip4>] to [<url>] in DDNS server [<scriptName>] because of [service_ddns_error_unknown].
+if ( (strpos($res, "good") !== 0) && (strpos($res, "nochg") !== 0)) {
+  syslog(LOG_ERR, "$argv[0]: '$res', see $LOG_NAME");
+}
 fwrite($fLOG, "$msg");
 fclose($fLOG);
+
+?>
