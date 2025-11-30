@@ -213,7 +213,7 @@ $msg .= "  used url: $url\n";
 
 $res="nochg $ip $ipv6\n"; # preset, optionally changed later
 # $msg .= "  last sending before $age_h h\n";
-if (! str_contains($lastLogLine, $ip) ) {
+if (strpos($lastLogLine, $ip) == false ) {  
   $unchanged=false;
   # $msg .= "  new IPv4 $ip, not found in '$lastLogLine'\n";
 }
