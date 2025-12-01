@@ -167,7 +167,7 @@ if($ipv6 != '') { # IPv6 available
     }  
   $myips .= 'ip6=$ipv6';
   # $unchanged=str_contains($lastLogLine, $ipv6);
-  $unchanged=(strpos($lastLogLine, $ipv6) !== false)
+  $unchanged=(strpos($lastLogLine, $ipv6) !== false);
   $msg .= "last_log_line (previous run): '$lastLogLine'\n";
   $msg .= "actual ipv6='$ipv6': $unchanged\n";
   }
