@@ -63,6 +63,7 @@ if (file_exists($LOG_NAME)) {
 # https://stackoverflow.com/questions/1062716/php-returning-the-last-line-in-a-file
 $LOG_NAME_ESC = escapeshellarg($LOG_NAME); // for the security concious (should be everyone!)
 $lastLogLine = `tail -n 1 $LOG_NAME_ESC`;
+$lastLogLine = rtrim($lastLogLine, "\n");
 # should be eg.:
 # returned result: nochg 87.175.192.182 2003:c8:72e:a000:9209:d0ff:fe05:c05f
 $fLOG = fopen($LOG_NAME, 'a+'); # open_basedir option required!
