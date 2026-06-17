@@ -38,16 +38,16 @@ function isCGNATIPv4(string $ip): bool {
 
 function isGlobalIPv4_DSaware(string $ip): bool {
   if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-    return false;     // ungültige IPv4?
+    return false;     // ungÃ¼ltige IPv4?
     }
-  // Private und reservierte ausschließen
+  // Private und reservierte ausschlieÃŸen
   if (filter_var($ip, FILTER_VALIDATE_IP, [ 'flags' => FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE]) === false) {
     return false;
     }
   if (isCGNATIPv4($ip)) {
     return false;
     }
-  return true; // echte öffentliche IPv4
+  return true; // echte Ã¶ffentliche IPv4
   }
 
 
@@ -166,7 +166,7 @@ if($ipv6 != '') { # IPv6 available
   if ($myips != '') {
     $myips .= '&';
     }  
-  $myips .= 'ip6=$ipv6';
+  $myips .= 'ip6=' . $ipv6;
   # $unchanged=str_contains($lastLogLine, $ipv6);
   $unchanged=(strpos($lastLogLine, $ipv6) !== false);
   $msg .= "last_log_line (previous run): '$lastLogLine'\n";
